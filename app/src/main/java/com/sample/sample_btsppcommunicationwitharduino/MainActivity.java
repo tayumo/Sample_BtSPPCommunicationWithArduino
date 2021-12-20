@@ -17,10 +17,13 @@ import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.TextView;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Set;
 import java.util.UUID;
 
@@ -41,12 +44,22 @@ public class MainActivity extends AppCompatActivity {
     private Button mConnectButton;
     BluetoothSocket mBluetoothSocket;
 
+    private EditText mSendDataEditText;
+    private Button mSendButton;
+    private OutputStream mOutputStream;
+    private InputStream mInputStream;
+    private TextView mReceiveDataTextView;
+    private Thread mReceiveThread;
+    private ReceiveRunnable mReceiveRunnable;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
         checkDeviceSupportBluetooth();
+
+        initBluetoothAdapter();
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         mActivityResultLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
                 new ActivityResultCallback<ActivityResult>() {
@@ -86,6 +99,7 @@ public class MainActivity extends AppCompatActivity {
 
         mConnectStatusTextView = findViewById(R.id.connect_status_text_view);
 
+        mBluetoothSocket = null;
         mConnectButton = findViewById(R.id.connect_button);
         mConnectButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -100,6 +114,19 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
+
+        mOutputStream = null;
+        mInputStream = null;
+        mSendDataEditText = findViewById(R.id.send_data_edit_text);
+        mSendButton = findViewById(R.id.send_button);
+        mSendButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                sendData();
+            }
+        });
+        mReceiveDataTextView = findViewById(R.id.receive_data_text_view);
+        mReceiveThread = null;
     }
 
     private void connectDevice(String connectDeviceName) {
@@ -124,6 +151,9 @@ public class MainActivity extends AppCompatActivity {
             try {
                 mBluetoothSocket.connect();
                 mConnectStatusTextView.setText(CONNECT_STATUS_CONNECT);
+                mOutputStream = mBluetoothSocket.getOutputStream();
+                mInputStream = mBluetoothSocket.getInputStream();
+                startReceiveTask();
             } catch (IOException e) {
                 e.printStackTrace();
                 try {
@@ -158,6 +188,27 @@ public class MainActivity extends AppCompatActivity {
                 .show();
     }
 
+    private void sendData() {
+        String sendString = mSendDataEditText.getText().toString();
+        if(mOutputStream != null) {
+            byte[] sendBytes = sendString.getBytes();
+            try {
+                mOutputStream.write(sendBytes);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private void startReceiveTask() {
+        if(mReceiveRunnable != null) {
+            mReceiveRunnable.shutdown();
+        }
+        mReceiveRunnable = new ReceiveRunnable();
+        mReceiveThread = new Thread(mReceiveRunnable);
+        mReceiveThread.start();
+    }
+
     @Override
     protected void onResume() {
         super.onResume();
@@ -179,5 +230,51 @@ public class MainActivity extends AppCompatActivity {
             }
         }
         mConnectDeviceSpinner.setAdapter(mConnectDeviceAdapter);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if(mReceiveRunnable != null) {
+            mReceiveRunnable.shutdown();
+        }
+    }
+
+    class ReceiveRunnable implements Runnable {
+        private boolean mIsKeepRunning;
+
+        @Override
+        public synchronized void run() {
+            mIsKeepRunning = true;
+            while(mIsKeepRunning) {
+                receiveData();
+                try {
+                    Thread.sleep(500);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        public synchronized void shutdown() {
+            mIsKeepRunning = false;
+        }
+
+        private void receiveData() {
+            if(mInputStream != null) {
+                byte[] receiveData = new byte[256];
+                int size;
+                try {
+                    size = mInputStream.read(receiveData);
+                    if(size > 0) {
+                        receiveData[size] = '\0';
+                        String receiveString = new String(receiveData, java.nio.charset.StandardCharsets.UTF_8);
+                        mReceiveDataTextView.setText(receiveString);
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
     }
 }
