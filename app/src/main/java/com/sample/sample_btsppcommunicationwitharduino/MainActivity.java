@@ -9,6 +9,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothSocket;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
@@ -17,12 +18,17 @@ import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.Spinner;
+import android.widget.TextView;
 
+import java.io.IOException;
 import java.util.Set;
+import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
     private static final String CONNECT_DEVICE_NONE = "NONE";
+    private static final String CONNECT_STATUS_CONNECT = "接続";
+    private static final String CONNECT_DISCONNECT_CONNECT = "未接続";
 
     private BluetoothAdapter mBluetoothAdapter;
     private ActivityResultLauncher<Intent> mActivityResultLauncher;
@@ -30,6 +36,10 @@ public class MainActivity extends AppCompatActivity {
     private Button mAddDeviceButton;
     private Spinner mConnectDeviceSpinner;
     private ArrayAdapter<String> mConnectDeviceAdapter;
+
+    private TextView mConnectStatusTextView;
+    private Button mConnectButton;
+    BluetoothSocket mBluetoothSocket;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -73,6 +83,58 @@ public class MainActivity extends AppCompatActivity {
         });
 
         mConnectDeviceSpinner = findViewById(R.id.connect_device_spinner);
+
+        mConnectStatusTextView = findViewById(R.id.connect_status_text_view);
+
+        mConnectButton = findViewById(R.id.connect_button);
+        mConnectButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                int selectedItemPosition = mConnectDeviceSpinner.getSelectedItemPosition();
+                String deviceName = mConnectDeviceAdapter.getItem(selectedItemPosition);
+
+                if(deviceName.equals(CONNECT_DEVICE_NONE)) {
+                    Log.e(TAG,"device is NONE");
+                } else {
+                    connectDevice(deviceName);
+                }
+            }
+        });
+    }
+
+    private void connectDevice(String connectDeviceName) {
+        BluetoothDevice connectBluetoothDevice = null;
+        Set<BluetoothDevice> pairedDevices = mBluetoothAdapter.getBondedDevices();
+        if (pairedDevices != null) {
+            for (BluetoothDevice bluetoothDevice : pairedDevices) {
+                if (connectDeviceName.equals(bluetoothDevice.getName())) {
+                    connectBluetoothDevice = bluetoothDevice;
+                    break;
+                }
+            }
+        }
+
+        UUID uuid = UUID.fromString("00001101-0000-1000-8000-00805f9b34fb");
+        try {
+            mBluetoothSocket = connectBluetoothDevice.createRfcommSocketToServiceRecord(uuid);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        if (mBluetoothSocket != null) {
+            try {
+                mBluetoothSocket.connect();
+                mConnectStatusTextView.setText(CONNECT_STATUS_CONNECT);
+            } catch (IOException e) {
+                e.printStackTrace();
+                try {
+                    mBluetoothSocket.close();
+                } catch (IOException e1) {
+                    e1.printStackTrace();
+                }
+                mBluetoothSocket = null;
+                Log.e(TAG, "Bluetooth connect failed.");
+            }
+        }
     }
 
     private void checkDeviceSupportBluetooth() {
