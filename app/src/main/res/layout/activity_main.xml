@@ -6,12 +6,32 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
+    <Button
+        android:id="@+id/add_device_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="デバイスを登録する"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/connect_device_text_view" />
+
+    <TextView
+        android:id="@+id/connect_device_text_view"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="接続デバイス:"
+        app:layout_constraintTop_toBottomOf="@id/add_device_button"
+        app:layout_constraintLeft_toLeftOf="@id/connect_device_spinner"
+        app:layout_constraintRight_toLeftOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/connect_status_text_view" />
+
     <Spinner
         android:id="@+id/connect_device_spinner"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/add_device_button"
+        app:layout_constraintLeft_toRightOf="@id/connect_device_text_view"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintBottom_toTopOf="@id/connect_status_text_view" />
 
@@ -29,18 +49,8 @@
         android:id="@+id/connect_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="接続"
+        android:text="接続する"
         app:layout_constraintTop_toBottomOf="@id/connect_status_text_view"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintBottom_toTopOf="@id/add_device_button" />
-
-    <Button
-        android:id="@+id/add_device_button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="デバイスを追加する"
-        app:layout_constraintTop_toBottomOf="@id/connect_button"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintBottom_toTopOf="@id/send_data_edit_text" />
@@ -51,7 +61,7 @@
         android:layout_height="100dp"
         android:hint="ここに送信するデータを入力してください"
         android:gravity="top"
-        app:layout_constraintTop_toTopOf="@id/add_device_button"
+        app:layout_constraintTop_toTopOf="@id/connect_button"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintBottom_toTopOf="@id/send_button" />
@@ -60,8 +70,19 @@
         android:id="@+id/send_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="送信"
+        android:text="送信する"
         app:layout_constraintTop_toBottomOf="@id/send_data_edit_text"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/receive_data_text_view" />
+
+    <TextView
+        android:id="@+id/receive_data_title_text_view"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="受信データ"
+        android:gravity="top"
+        app:layout_constraintTop_toBottomOf="@id/send_button"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintBottom_toTopOf="@id/receive_data_text_view" />
@@ -72,7 +93,7 @@
         android:layout_height="100dp"
         android:text="Hello World!"
         android:gravity="top"
-        app:layout_constraintTop_toBottomOf="@id/send_button"
+        app:layout_constraintTop_toBottomOf="@id/receive_data_title_text_view"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintBottom_toBottomOf="parent" />
