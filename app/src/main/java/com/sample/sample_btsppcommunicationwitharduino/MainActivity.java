@@ -8,34 +8,33 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.Spinner;
+
+import java.util.Set;
 
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
+    private static final String CONNECT_DEVICE_NONE = "NONE";
 
     private BluetoothAdapter mBluetoothAdapter;
     private ActivityResultLauncher<Intent> mActivityResultLauncher;
 
     private Button mAddDeviceButton;
+    private Spinner mConnectDeviceSpinner;
+    private ArrayAdapter<String> mConnectDeviceAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-        mAddDeviceButton = findViewById(R.id.add_device_button);
-        mAddDeviceButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Intent intent = new Intent(android.provider.Settings.ACTION_BLUETOOTH_SETTINGS);
-                startActivity(intent);
-            }
-        });
 
         checkDeviceSupportBluetooth();
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
@@ -63,6 +62,17 @@ public class MainActivity extends AppCompatActivity {
             Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             mActivityResultLauncher.launch(enableBtIntent);
         }
+
+        mAddDeviceButton = findViewById(R.id.add_device_button);
+        mAddDeviceButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(android.provider.Settings.ACTION_BLUETOOTH_SETTINGS);
+                startActivity(intent);
+            }
+        });
+
+        mConnectDeviceSpinner = findViewById(R.id.connect_device_spinner);
     }
 
     private void checkDeviceSupportBluetooth() {
@@ -84,5 +94,28 @@ public class MainActivity extends AppCompatActivity {
                     }
                 })
                 .show();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        initConnectDeviceSpinner();
+    }
+
+    private void initConnectDeviceSpinner() {
+        Set<BluetoothDevice> pairedDevices = mBluetoothAdapter.getBondedDevices();
+        if(pairedDevices != null) {
+            mConnectDeviceAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item);
+
+            if(pairedDevices.isEmpty()) {
+                mConnectDeviceAdapter.add(CONNECT_DEVICE_NONE);
+            } else {
+                for (BluetoothDevice bluetoothDevice : pairedDevices) {
+                    String deviceName = bluetoothDevice.getName();
+                    mConnectDeviceAdapter.add(deviceName);
+                }
+            }
+        }
+        mConnectDeviceSpinner.setAdapter(mConnectDeviceAdapter);
     }
 }
