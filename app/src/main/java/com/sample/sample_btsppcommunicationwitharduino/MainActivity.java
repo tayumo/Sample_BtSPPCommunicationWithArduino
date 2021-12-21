@@ -245,10 +245,8 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onPause() {
-        Log.d(TAG,"enter onPause");
         disconnectBluetooth();
         super.onPause();
-        Log.d(TAG,"leave onPause");
     }
 
     private void disconnectBluetooth() {
@@ -256,7 +254,6 @@ public class MainActivity extends AppCompatActivity {
             mReceiveRunnable.shutdown();
             mReceiveRunnable = null;
         }
-        Log.d(TAG,"finish shutdown");
         if(mOutputStream != null) {
             try {
                 mOutputStream.close();
@@ -265,7 +262,6 @@ public class MainActivity extends AppCompatActivity {
             }
             mOutputStream = null;
         }
-        Log.d(TAG,"finish close mOutputStream");
         if(mInputStream != null) {
             try {
                 mInputStream.close();
@@ -274,7 +270,6 @@ public class MainActivity extends AppCompatActivity {
             }
             mInputStream = null;
         }
-        Log.d(TAG,"finish close mInputStream");
         if(mBluetoothSocket != null) {
             try {
                 mBluetoothSocket.close();
@@ -283,7 +278,6 @@ public class MainActivity extends AppCompatActivity {
             }
             mBluetoothSocket = null;
         }
-        Log.d(TAG,"finish close mBluetoothSocket");
         mConnectStatusTextView.setText(CONNECT_DISCONNECT_CONNECT);
     }
 
