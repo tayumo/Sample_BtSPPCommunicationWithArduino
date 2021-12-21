@@ -58,8 +58,13 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         checkDeviceSupportBluetooth();
-
         initBluetoothAdapter();
+        initAddDeviceButton();
+        initConnectButton();
+        initBluetoothIO();
+    }
+
+    private void initBluetoothAdapter() {
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         mActivityResultLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
                 new ActivityResultCallback<ActivityResult>() {
@@ -85,86 +90,6 @@ public class MainActivity extends AppCompatActivity {
             Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             mActivityResultLauncher.launch(enableBtIntent);
         }
-
-        mAddDeviceButton = findViewById(R.id.add_device_button);
-        mAddDeviceButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Intent intent = new Intent(android.provider.Settings.ACTION_BLUETOOTH_SETTINGS);
-                startActivity(intent);
-            }
-        });
-
-        mConnectDeviceSpinner = findViewById(R.id.connect_device_spinner);
-
-        mConnectStatusTextView = findViewById(R.id.connect_status_text_view);
-
-        mBluetoothSocket = null;
-        mConnectButton = findViewById(R.id.connect_button);
-        mConnectButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                int selectedItemPosition = mConnectDeviceSpinner.getSelectedItemPosition();
-                String deviceName = mConnectDeviceAdapter.getItem(selectedItemPosition);
-
-                if(deviceName.equals(CONNECT_DEVICE_NONE)) {
-                    Log.e(TAG,"device is NONE");
-                } else {
-                    connectDevice(deviceName);
-                }
-            }
-        });
-
-        mOutputStream = null;
-        mInputStream = null;
-        mSendDataEditText = findViewById(R.id.send_data_edit_text);
-        mSendButton = findViewById(R.id.send_button);
-        mSendButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                sendData();
-            }
-        });
-        mReceiveDataTextView = findViewById(R.id.receive_data_text_view);
-        mReceiveThread = null;
-    }
-
-    private void connectDevice(String connectDeviceName) {
-        BluetoothDevice connectBluetoothDevice = null;
-        Set<BluetoothDevice> pairedDevices = mBluetoothAdapter.getBondedDevices();
-        if (pairedDevices != null) {
-            for (BluetoothDevice bluetoothDevice : pairedDevices) {
-                if (connectDeviceName.equals(bluetoothDevice.getName())) {
-                    connectBluetoothDevice = bluetoothDevice;
-                    break;
-                }
-            }
-        }
-
-        UUID uuid = UUID.fromString("00001101-0000-1000-8000-00805f9b34fb");
-        try {
-            mBluetoothSocket = connectBluetoothDevice.createRfcommSocketToServiceRecord(uuid);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        if (mBluetoothSocket != null) {
-            try {
-                mBluetoothSocket.connect();
-                mConnectStatusTextView.setText(CONNECT_STATUS_CONNECT);
-                mOutputStream = mBluetoothSocket.getOutputStream();
-                mInputStream = mBluetoothSocket.getInputStream();
-                startReceiveTask();
-            } catch (IOException e) {
-                e.printStackTrace();
-                try {
-                    mBluetoothSocket.close();
-                } catch (IOException e1) {
-                    e1.printStackTrace();
-                }
-                mBluetoothSocket = null;
-                Log.e(TAG, "Bluetooth connect failed.");
-            }
-        }
     }
 
     private void checkDeviceSupportBluetooth() {
@@ -188,14 +113,97 @@ public class MainActivity extends AppCompatActivity {
                 .show();
     }
 
+    private void initAddDeviceButton() {
+        mAddDeviceButton = findViewById(R.id.add_device_button);
+        mAddDeviceButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(android.provider.Settings.ACTION_BLUETOOTH_SETTINGS);
+                startActivity(intent);
+            }
+        });
+    }
+
+    private void initConnectButton() {
+        mConnectStatusTextView = findViewById(R.id.connect_status_text_view);
+        mBluetoothSocket = null;
+        mConnectButton = findViewById(R.id.connect_button);
+        mConnectButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                int selectedItemPosition = mConnectDeviceSpinner.getSelectedItemPosition();
+                String deviceName = mConnectDeviceAdapter.getItem(selectedItemPosition);
+
+                if(deviceName.equals(CONNECT_DEVICE_NONE)) {
+                    Log.e(TAG,"device is NONE");
+                } else {
+                    connectDevice(deviceName);
+                }
+            }
+        });
+    }
+
+    private void connectDevice(String connectDeviceName) {
+        BluetoothDevice connectBluetoothDevice = null;
+        Set<BluetoothDevice> pairedDevices = mBluetoothAdapter.getBondedDevices();
+        if (pairedDevices != null) {
+            for (BluetoothDevice bluetoothDevice : pairedDevices) {
+                if (connectDeviceName.equals(bluetoothDevice.getName())) {
+                    connectBluetoothDevice = bluetoothDevice;
+                    break;
+                }
+            }
+        }
+
+        UUID uuid = UUID.fromString("00001101-0000-1000-8000-00805f9b34fb");
+        try {
+            mBluetoothSocket = connectBluetoothDevice.createRfcommSocketToServiceRecord(uuid);
+        } catch (IOException createIOException) {
+            createIOException.printStackTrace();
+        }
+        if (mBluetoothSocket != null) {
+            try {
+                mBluetoothSocket.connect();
+                mConnectStatusTextView.setText(CONNECT_STATUS_CONNECT);
+                mOutputStream = mBluetoothSocket.getOutputStream();
+                mInputStream = mBluetoothSocket.getInputStream();
+                startReceiveTask();
+            } catch (IOException connectIOException) {
+                connectIOException.printStackTrace();
+                try {
+                    mBluetoothSocket.close();
+                } catch (IOException closeIOException) {
+                    closeIOException.printStackTrace();
+                }
+                mBluetoothSocket = null;
+                Log.e(TAG, "Bluetooth connect failed.");
+            }
+        }
+    }
+
+    private void initBluetoothIO() {
+        mOutputStream = null;
+        mInputStream = null;
+        mSendDataEditText = findViewById(R.id.send_data_edit_text);
+        mSendButton = findViewById(R.id.send_button);
+        mSendButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                sendData();
+            }
+        });
+        mReceiveDataTextView = findViewById(R.id.receive_data_text_view);
+        mReceiveThread = null;
+    }
+
     private void sendData() {
         String sendString = mSendDataEditText.getText().toString();
         if(mOutputStream != null) {
             byte[] sendBytes = sendString.getBytes();
             try {
                 mOutputStream.write(sendBytes);
-            } catch (IOException e) {
-                e.printStackTrace();
+            } catch (IOException writeIOException) {
+                writeIOException.printStackTrace();
             }
         }
     }
@@ -216,6 +224,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void initConnectDeviceSpinner() {
+        mConnectDeviceSpinner = findViewById(R.id.connect_device_spinner);
         Set<BluetoothDevice> pairedDevices = mBluetoothAdapter.getBondedDevices();
         if(pairedDevices != null) {
             mConnectDeviceAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item);
@@ -250,8 +259,8 @@ public class MainActivity extends AppCompatActivity {
                 receiveData();
                 try {
                     Thread.sleep(500);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
+                } catch (InterruptedException threadSleepInterruptedException) {
+                    threadSleepInterruptedException.printStackTrace();
                 }
             }
         }
@@ -271,8 +280,8 @@ public class MainActivity extends AppCompatActivity {
                         String receiveString = new String(receiveData, java.nio.charset.StandardCharsets.UTF_8);
                         mReceiveDataTextView.setText(receiveString);
                     }
-                } catch (IOException e) {
-                    e.printStackTrace();
+                } catch (IOException readIOException) {
+                    readIOException.printStackTrace();
                 }
             }
         }
