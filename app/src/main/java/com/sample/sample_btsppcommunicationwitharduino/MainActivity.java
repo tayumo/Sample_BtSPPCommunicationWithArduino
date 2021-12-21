@@ -304,7 +304,7 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
-        public synchronized void shutdown() {
+        public void shutdown() {
             mIsKeepRunning = false;
         }
 
