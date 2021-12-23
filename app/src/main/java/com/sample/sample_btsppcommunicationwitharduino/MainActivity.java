@@ -64,6 +64,14 @@ public class MainActivity extends AppCompatActivity {
         initBluetoothIO();
     }
 
+    private void checkDeviceSupportBluetooth() {
+        BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+        if (bluetoothAdapter == null) {
+            Log.e(TAG, "Device does not support Bluetooth.");
+            finish();
+        }
+    }
+
     private void initBluetoothAdapter() {
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         mActivityResultLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
@@ -89,14 +97,6 @@ public class MainActivity extends AppCompatActivity {
         if (!mBluetoothAdapter.isEnabled()) {
             Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             mActivityResultLauncher.launch(enableBtIntent);
-        }
-    }
-
-    private void checkDeviceSupportBluetooth() {
-        BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-        if (bluetoothAdapter == null) {
-            Log.e(TAG, "Device does not support Bluetooth.");
-            finish();
         }
     }
 
@@ -184,8 +184,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void initBluetoothIO() {
-        mOutputStream = null;
-        mInputStream = null;
         mSendDataEditText = findViewById(R.id.send_data_edit_text);
         mSendButton = findViewById(R.id.send_button);
         mSendButton.setOnClickListener(new View.OnClickListener() {
@@ -228,6 +226,7 @@ public class MainActivity extends AppCompatActivity {
     private void initConnectDeviceSpinner() {
         mConnectDeviceSpinner = findViewById(R.id.connect_device_spinner);
         Set<BluetoothDevice> pairedDevices = mBluetoothAdapter.getBondedDevices();
+
         if(pairedDevices != null) {
             mConnectDeviceAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item);
 
@@ -280,7 +279,6 @@ public class MainActivity extends AppCompatActivity {
         }
         mConnectStatusTextView.setText(CONNECT_DISCONNECT_CONNECT);
     }
-
 
     class ReceiveRunnable implements Runnable {
         private boolean mIsKeepRunning;
